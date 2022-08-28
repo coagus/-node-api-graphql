@@ -194,4 +194,5 @@ $ nodemon ./src/index.ts
 Server run in port 3000
 ```
 Result in browser
+
 ![result api](resources/img/express_result_api.png?raw=true)
