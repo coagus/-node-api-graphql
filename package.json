@@ -7,6 +7,10 @@
   "author": "Christian Agustin <christian@agustin.gt>",
   "license": "MIT",
   "scripts": {
-    "start": "node ./src/index.js"
+    "start": "node ./dist/index.js",
+    "build": "tsc -p ."
+  },
+  "devDependencies": {
+    "typescript": "^4.8.2"
   }
 }
