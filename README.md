@@ -1,37 +1,65 @@
-# graphql-api-nodejs / 02 Typescript
+# graphql-api-nodejs / 03 Webpack
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
 
 Install Yarn and Typescript
-```log
+```console
 npm i -g yarn typescript
 ```
 Initialize project with Yarn
-```log
+```console
 yarn init
 ```
 Add developer modules
-```log
-yarn add -D typescript
+```console
+yarn add -D typescript ts-node ts-loader webpack webpack-cli webpack-node-externals @types/node
 ```
 Create typscript config
-```log
+```console
 tsc --init
 ```
-Add outDir and rootDir into compilerOptions in tsconfig.json
+Add outDir, rootDir and sourceMap into compilerOptions in tsconfig.json
 ```json
 {
   "compilerOptions": {
-    "target": "es2016",                        
-    "module": "commonjs",                      
+    "target": "es2016",
+    "module": "commonjs",
+    "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "esModuleInterop": true,                   
-    "forceConsistentCasingInFileNames": true,  
-    "strict": true,                            
-    "skipLibCheck": true                       
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
   }
+}
+```
+Create webpack.config.js
+```javascript
+const path = require('path');
+
+const nodeExternals = require('webpack-node-externals');
+module.exports = {
+    mode: 'production',
+    entry: './src/index.ts',
+    output: {
+        filename: 'index.js',
+        path: path.resolve(__dirname, 'dist'),
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
+    },
+    module: {
+        rules: [
+            {
+                test: /\.ts/,
+                use: 'ts-loader',
+                include: [path.resolve(__dirname, 'src')],
+            },
+        ]
+    },
+    externals: [ nodeExternals() ],
 }
 ```
 Add script in package.json with command start and build
@@ -46,10 +74,16 @@ Add script in package.json with command start and build
   "license": "MIT",
   "scripts": {
     "start": "node ./dist/index.js",
-    "build": "tsc -p ."
+    "build": "webpack"
   },
   "devDependencies": {
-    "typescript": "^4.8.2"
+    "@types/node": "^18.7.13",
+    "ts-loader": "^9.3.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.2",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-node-externals": "^3.0.0"
   }
 }
 ```
@@ -59,22 +93,25 @@ const msg: string = "Hello World!";
 console.log(msg);
 ```
 Build project with Yarn
-```log
+```console
 yarn build
 ```
 Result:
-```log
+```console
 $ yarn build
 yarn run v<#.##.## your version>
-$ tsc -p .
-Done in 1.16s.
+$ webpack
+asset index.js 51 bytes [emitted] [minimized] (name: main)
+./src/index.ts 63 bytes [built] [code generated]
+webpack 5.74.0 compiled successfully in 1826 ms
+Done in 3.40s.
 ```
 Start project with Yarn
-```log
+```console
 yarn start
 ```
 Result:
-```log
+```console
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
@@ -89,7 +126,5 @@ console.log(msg);
  ``` 
 *dist/index.js*
 ```javascript
-"use strict";
-const msg = "Hello World!";
-console.log(msg);
+(()=>{"use strict";console.log("Hello World!")})();
 ```
