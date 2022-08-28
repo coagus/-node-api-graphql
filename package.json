@@ -1,0 +1,12 @@
+{
+  "name": "graphql-api-nodejs",
+  "version": "1.0.0",
+  "description": "GraphQL API with nodejs",
+  "main": "index.js",
+  "repository": "https://github.com/coagus/graphql-api-nodejs.git",
+  "author": "Christian Agustin <christian@agustin.gt>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node ./src/index.js"
+  }
+}
