@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 05 Dotenv Winston
+# graphql-api-nodejs / 05 Dotenv
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
