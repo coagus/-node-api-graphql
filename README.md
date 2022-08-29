@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 04 Express
+# graphql-api-nodejs / 05 Dotenv Winston
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -13,7 +13,7 @@ yarn init
 ```
 Add modules
 ```console
-yarn add express
+yarn add express dotenv
 ```
 Add developer modules
 ```console
@@ -39,13 +39,19 @@ Add outDir, rootDir and sourceMap into compilerOptions in tsconfig.json
   }
 }
 ```
+Create .env file for environments vars
+```bash
+NODE_ENV="development"
+PORT=3001
+```
 Create webpack.config.js
-```javascript
+```javascripts
 const path = require('path');
-
 const nodeExternals = require('webpack-node-externals');
+const { NODE_ENV = 'production' } = process.env;
+
 module.exports = {
-    mode: 'production',
+    mode: NODE_ENV,
     entry: './src/index.ts',
     output: {
         filename: 'index.js',
@@ -63,7 +69,7 @@ module.exports = {
             },
         ]
     },
-    externals: [ nodeExternals() ],
+    externals: [nodeExternals()],
 }
 ```
 Add script in package.json with command dev, build and start
@@ -93,17 +99,19 @@ Add script in package.json with command dev, build and start
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
+    "dotenv": "^16.0.1",
     "express": "^4.18.1"
   }
 }
 ```
 Create src/index.ts
 ```javascript
+require("dotenv").config();
 import express, { Application, Request, Response } from "express";
 
 const api = async () => {
+  const { PORT = 3000 } = process.env;
   const msg: string = "Hello World!";
-  const port: number = 3000;
   const app: Application = express();
 
   app.use(express.json());
@@ -112,8 +120,8 @@ const api = async () => {
       message: msg,
     });
   });
-  app.listen(port, () => {
-    console.log(`Server run in ${port}`);
+  app.listen(PORT, () => {
+    console.log(`Server run in port ${PORT}`);
   });
 };
 
@@ -130,11 +138,12 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 928 bytes [emitted] [minimized] (name: main)
-./src/index.ts 1.39 KiB [built] [code generated]
+asset index.js 1010 bytes [compared for emit] [minimized] (name: main)
+./src/index.ts 1.44 KiB [built] [code generated]
+external "dotenv" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 2176 ms
-Done in 3.62s.
+webpack 5.74.0 compiled successfully in 4216 ms
+Done in 6.33s.
 ```
 Start project with Yarn
 ```console
@@ -145,37 +154,11 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-Server run in port 3000
+Server run in port 3001
 ```
-Difference
-
-*src/index.ts*
-```javascript
-import express, { Application, Request, Response } from "express";
-
-const api = async () => {
-  const msg: string = "Hello World!";
-  const port: number = 3000;
-  const app: Application = express();
-
-  app.use(express.json());
-  app.get("/", (req: Request, res: Response) => {
-    res.json({
-      message: msg,
-    });
-  });
-  app.listen(port, () => {
-    console.log(`Server run in port ${port}`);
-  });
-};
-
-api().catch((err) => {
-  console.log(err);
-});
- ``` 
 *dist/index.js*
 ```javascript
-(()=>{"use strict";var e={607:function(e,t,n){var o=this&&this.__awaiter||function(e,t,n,o){return new(n||(n=Promise))((function(r,i){function s(e){try{c(o.next(e))}catch(e){i(e)}}function u(e){try{c(o.throw(e))}catch(e){i(e)}}function c(e){var t;e.done?r(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t)}))).then(s,u)}c((o=o.apply(e,t||[])).next())}))},r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0});const i=r(n(860));o(void 0,void 0,void 0,(function*(){const e=(0,i.default)();e.use(i.default.json()),e.get("/",((e,t)=>{t.json({message:"Hello World!"})})),e.listen(3e3,(()=>{console.log("Server run in 3000")}))})).catch((e=>{console.log(e)}))},860:e=>{e.exports=require("express")}},t={};!function n(o){var r=t[o];if(void 0!==r)return r.exports;var i=t[o]={exports:{}};return e[o].call(i.exports,i,i.exports,n),i.exports}(607)})();
+(()=>{"use strict";var e={607:function(e,t,n){var o=this&&this.__awaiter||function(e,t,n,o){return new(n||(n=Promise))((function(r,s){function i(e){try{c(o.next(e))}catch(e){s(e)}}function u(e){try{c(o.throw(e))}catch(e){s(e)}}function c(e){var t;e.done?r(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t)}))).then(i,u)}c((o=o.apply(e,t||[])).next())}))},r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),n(142).config();const s=r(n(860));o(void 0,void 0,void 0,(function*(){const{PORT:e=3e3}=process.env,t=(0,s.default)();t.use(s.default.json()),t.get("/",((e,t)=>{t.json({message:"Hello World!"})})),t.listen(e,(()=>{console.log(`Server run in port ${e}`)}))})).catch((e=>{console.log(e)}))},142:e=>{e.exports=require("dotenv")},860:e=>{e.exports=require("express")}},t={};!function n(o){var r=t[o];if(void 0!==r)return r.exports;var s=t[o]={exports:{}};return e[o].call(s.exports,s,s.exports,n),s.exports}(607)})();
 ```
 Start project with Yarn in DEV
 ```console
@@ -191,7 +174,7 @@ $ nodemon ./src/index.ts
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
 [nodemon] starting `ts-node ./src/index.ts`
-Server run in port 3000
+Server run in port 3001
 ```
 Result in browser
 
