@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 05 Dotenv
+# graphql-api-nodejs / 06 Winston
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -13,7 +13,7 @@ yarn init
 ```
 Add modules
 ```console
-yarn add express dotenv
+yarn add express dotenv winston
 ```
 Add developer modules
 ```console
@@ -43,6 +43,12 @@ Create .env file for environments vars
 ```bash
 NODE_ENV="development"
 PORT=3001
+
+# LOGGER
+FILE_LOG="./logs/GraphQL-API.log"
+LEVEL="debug" # error, warn, help, data, info, debug
+MAX_SIZE=5120000
+MAX_FILES=5
 ```
 Create webpack.config.js
 ```javascripts
@@ -104,10 +110,42 @@ Add script in package.json with command dev, build and start
   }
 }
 ```
+Create src/utils/logger.ts
+```javascript
+import { createLogger, format, transports } from "winston";
+
+const {
+  LEVEL = "info",
+  MAX_SIZE = 5120000,
+  MAX_FILES = 5,
+  FILE_LOG = "./logs/API.log",
+} = process.env;
+
+export const Logger = createLogger({
+  format: format.combine(
+    format.simple(),
+    format.timestamp(),
+    format.printf(
+      (logInfo) => `[${logInfo.timestamp}] ${logInfo.level}: ${logInfo.message}`
+    )
+  ),
+  transports: [
+    new transports.Console({
+      level: LEVEL,
+    }),
+    new transports.File({
+      maxsize: MAX_SIZE as number,
+      maxFiles: MAX_FILES as number,
+      filename: FILE_LOG,
+    }),
+  ],
+});
+```
 Create src/index.ts
 ```javascript
 require("dotenv").config();
 import express, { Application, Request, Response } from "express";
+import { Logger } from "./utils/logger";
 
 const api = async () => {
   const { PORT = 3000 } = process.env;
@@ -121,12 +159,12 @@ const api = async () => {
     });
   });
   app.listen(PORT, () => {
-    console.log(`Server run in port ${PORT}`);
+    Logger.info(`Server run in port ${PORT}`);
   });
 };
 
 api().catch((err) => {
-  console.log(err);
+  Logger.error(err);
 });
 ```
 Build project with Yarn
@@ -138,12 +176,15 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 1010 bytes [compared for emit] [minimized] (name: main)
-./src/index.ts 1.44 KiB [built] [code generated]
+asset index.js 1.47 KiB [emitted] [minimized] (name: main)
+cacheable modules 2.25 KiB
+  ./src/index.ts 1.5 KiB [built] [code generated]
+  ./src/utils/logger.ts 764 bytes [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 4216 ms
-Done in 6.33s.
+external "winston" 42 bytes [built] [code generated]
+webpack 5.74.0 compiled successfully in 4293 ms
+Done in 7.75s.
 ```
 Start project with Yarn
 ```console
@@ -154,11 +195,11 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-Server run in port 3001
+[2022-08-29T22:41:37.046Z] info: Server run in port 3001
 ```
-*dist/index.js*
+*dist/index.js* result:
 ```javascript
-(()=>{"use strict";var e={607:function(e,t,n){var o=this&&this.__awaiter||function(e,t,n,o){return new(n||(n=Promise))((function(r,s){function i(e){try{c(o.next(e))}catch(e){s(e)}}function u(e){try{c(o.throw(e))}catch(e){s(e)}}function c(e){var t;e.done?r(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t)}))).then(i,u)}c((o=o.apply(e,t||[])).next())}))},r=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),n(142).config();const s=r(n(860));o(void 0,void 0,void 0,(function*(){const{PORT:e=3e3}=process.env,t=(0,s.default)();t.use(s.default.json()),t.get("/",((e,t)=>{t.json({message:"Hello World!"})})),t.listen(e,(()=>{console.log(`Server run in port ${e}`)}))})).catch((e=>{console.log(e)}))},142:e=>{e.exports=require("dotenv")},860:e=>{e.exports=require("express")}},t={};!function n(o){var r=t[o];if(void 0!==r)return r.exports;var s=t[o]={exports:{}};return e[o].call(s.exports,s,s.exports,n),s.exports}(607)})();
+(()=>{"use strict";var e={607:function(e,t,o){var r=this&&this.__awaiter||function(e,t,o,r){return new(o||(o=Promise))((function(n,s){function i(e){try{u(r.next(e))}catch(e){s(e)}}function a(e){try{u(r.throw(e))}catch(e){s(e)}}function u(e){var t;e.done?n(e.value):(t=e.value,t instanceof o?t:new o((function(e){e(t)}))).then(i,a)}u((r=r.apply(e,t||[])).next())}))},n=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),o(142).config();const s=n(o(860)),i=o(645);r(void 0,void 0,void 0,(function*(){const{PORT:e=3e3}=process.env,t=(0,s.default)();t.use(s.default.json()),t.get("/",((e,t)=>{t.json({message:"Hello World!"})})),t.listen(e,(()=>{i.Logger.info(`Server run in port ${e}`)}))})).catch((e=>{i.Logger.error(e)}))},645:(e,t,o)=>{Object.defineProperty(t,"__esModule",{value:!0}),t.Logger=void 0;const r=o(773),{LEVEL:n="info",MAX_SIZE:s=512e4,MAX_FILES:i=5,FILE_LOG:a="./logs/API.log"}=process.env;t.Logger=(0,r.createLogger)({format:r.format.combine(r.format.simple(),r.format.timestamp(),r.format.printf((e=>`[${e.timestamp}] ${e.level}: ${e.message}`))),transports:[new r.transports.Console({level:n}),new r.transports.File({maxsize:s,maxFiles:i,filename:a})]})},142:e=>{e.exports=require("dotenv")},860:e=>{e.exports=require("express")},773:e=>{e.exports=require("winston")}},t={};!function o(r){var n=t[r];if(void 0!==n)return n.exports;var s=t[r]={exports:{}};return e[r].call(s.exports,s,s.exports,o),s.exports}(607)})();
 ```
 Start project with Yarn in DEV
 ```console
@@ -174,7 +215,7 @@ $ nodemon ./src/index.ts
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
 [nodemon] starting `ts-node ./src/index.ts`
-Server run in port 3001
+[2022-08-29T22:43:33.769Z] info: Server run in port 3001
 ```
 Result in browser
 

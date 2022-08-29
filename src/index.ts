@@ -1,5 +1,6 @@
 require("dotenv").config();
 import express, { Application, Request, Response } from "express";
+import { Logger } from "./utils/logger";
 
 const api = async () => {
   const { PORT = 3000 } = process.env;
@@ -13,10 +14,10 @@ const api = async () => {
     });
   });
   app.listen(PORT, () => {
-    console.log(`Server run in port ${PORT}`);
+    Logger.info(`Server run in port ${PORT}`);
   });
 };
 
 api().catch((err) => {
-  console.log(err);
+  Logger.error(err);
 });
