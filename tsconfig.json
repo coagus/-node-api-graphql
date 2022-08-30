@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2016",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "module": "commonjs",
     "sourceMap": true,
     "outDir": "./dist",
@@ -18,6 +20,12 @@
       ],
       "@type_defs/*": [
         "src/graphql/type_defs/*"
+      ],
+      "@database": [
+        "src/database"
+      ],
+      "@entities/*": [
+        "src/database/entities/*"
       ]
     },
     "esModuleInterop": true,
