@@ -23,8 +23,10 @@ Create typscript config
 ```console
 tsc --init
 ```
-###Config files
-####tsconfig.json
+### Config files
+
+**tsconfig.json**
+
 Add experimentalDecorators, emitDecoratorMetadata, sourceMap, outDir, rootDir, bseUrl and paths into compilerOptions.
 ```json
 {
@@ -64,7 +66,8 @@ Add experimentalDecorators, emitDecoratorMetadata, sourceMap, outDir, rootDir, b
   }
 }
 ```
-####.env
+**.env**
+
 Create .env file for environments vars
 ```bash
 NODE_ENV="development"
@@ -83,7 +86,7 @@ DS_PG_USER="postgres"
 DS_PG_PASS="d3Ve10p"
 DS_PG_DB="apidb"
 ```
-####webpack.config.js
+**webpack.config.js**
 ```javascripts
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
@@ -113,7 +116,8 @@ module.exports = {
     externals: [nodeExternals()],
 }
 ```
-####package.json
+**package.json**
+
 Add script command dev, build and start
 ```json
 {
@@ -153,7 +157,7 @@ Add script command dev, build and start
   }
 }
 ```
-###Logger
+### Logger
 Create src/utils/logger.ts
 ```javascript
 import { createLogger, format, transports } from "winston";
@@ -185,7 +189,7 @@ export const Logger = createLogger({
   ],
 });
 ```
-###Database
+### Database
 create src/database/index.ts
 ```javascript
 import { User } from "@entities/user";
@@ -230,12 +234,12 @@ export const db = {
   },
 };
 ```
-###User
+### User
 Create src/database/entities/user.ts
 ```javascript
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+@Entity({name: "User"})
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -278,7 +282,7 @@ export const GET_ALL_USERS = {
     }
 }
 ```
-###Message
+### Message
 Create src/graphql/type_defs/message.ts
 ```javascript
 import { GraphQLObjectType, GraphQLString } from "graphql";
@@ -309,7 +313,7 @@ export const GET_MESSAGE = {
   },
 };
 ```
-###GraphQL Schema
+### GraphQL Schema
 Create src/graphql/index.ts
 ```javascript
 import { GraphQLObjectType, GraphQLSchema } from "graphql";
@@ -418,7 +422,7 @@ Check new row with GraphQL API
 http://localhost:3001/api
 
 Create query for user
-```json
+```javascript
 query {
   getAllUsers {
     id
@@ -429,7 +433,9 @@ query {
 }
 ```
 Check result
+
 ![user table](resources/img/graphql_user.png?raw=true)
+
 Check log
 ```bash
 [2022-08-30T21:00:58.625Z] debug: graphql.queries.user.GET_ALL_USERS.resolve()
@@ -472,16 +478,16 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-30T21:08:21.362Z] debug: database.initDbPg
+[2022-08-30T21:52:08.094Z] debug: database.initDbPg
 query: SELECT * FROM current_schema()
 query: SELECT version();
 query: START TRANSACTION
 query: SELECT * FROM current_schema()
 query: SELECT * FROM current_database()
-query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WHERE ("table_schema" = 'public' AND "table_name" = 'i')
+query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WHERE ("table_schema" = 'public' AND "table_name" = 'User')
 query: SELECT * FROM "information_schema"."tables" WHERE "table_schema" = 'public' AND "table_name" = 'typeorm_metadata'
-query: CREATE TABLE "i" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_35befce1e7022fba16b43ea76e4" UNIQUE ("username"), CONSTRAINT "PK_6d227eb893132f54a420ceb177d" PRIMARY KEY ("id"))
+query: CREATE TABLE "User" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_29a05908a0fa0728526d2833657" UNIQUE ("username"), CONSTRAINT "PK_9862f679340fb2388436a5ab3e4" PRIMARY KEY ("id"))
 query: COMMIT
-[2022-08-30T21:08:21.624Z] info: Database postgres initialized successfuly!
-[2022-08-30T21:08:21.640Z] info: Server runnig in port 3001
+[2022-08-30T21:52:08.322Z] info: Database postgres initialized successfuly!
+[2022-08-30T21:52:08.329Z] info: Server runnig in port 3001
 ```
