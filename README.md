@@ -32,10 +32,10 @@ Add outDir, rootDir, bseUrl, paths, sourceMap into compilerOptions in tsconfig.j
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "src",
+    "baseUrl": "./",
     "paths": {
       "@utils/*": [
-        "utils/*"
+        "src/utils/*"
       ]
     },
     "esModuleInterop": true,
