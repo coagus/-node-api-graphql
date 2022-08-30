@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 07 Alias Path
+# graphql-api-nodejs / 08 GraphQL Basic
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -13,7 +13,7 @@ yarn init
 ```
 Add modules
 ```console
-yarn add express dotenv winston
+yarn add express dotenv winston graphql express-graphql
 ```
 Add developer modules
 ```console
@@ -116,6 +116,8 @@ Add script in package.json with command dev, build and start
   "dependencies": {
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "express-graphql": "^0.12.0",
+    "graphql": "^16.6.0",
     "winston": "^3.8.1"
   }
 }
@@ -156,20 +158,35 @@ Create src/index.ts
 require("dotenv").config();
 import express, { Application, Request, Response } from "express";
 import { Logger } from "@utils/logger";
+import { buildSchema } from "graphql";
+import { graphqlHTTP } from "express-graphql";
 
 const api = async () => {
-  const { PORT = 3000 } = process.env;
+  const { PORT = 3000, NODE_ENV = "development" } = process.env;
   const msg: string = "Hello World!";
+  const schema = buildSchema(`
+    type Query {
+        hello: String
+    }
+  `);
+  const resolvers = {
+    hello: () => {
+      return msg;
+    },
+  };
   const app: Application = express();
 
   app.use(express.json());
-  app.get("/", (req: Request, res: Response) => {
-    res.json({
-      message: msg,
-    });
-  });
+  app.use(
+    "/api",
+    graphqlHTTP({
+      schema,
+      graphiql: NODE_ENV === "development",
+      rootValue: resolvers,
+    })
+  );
   app.listen(PORT, () => {
-    Logger.info(`Server run in port ${PORT}`);
+    Logger.info(`Server runnig in port ${PORT}`);
   });
 };
 
@@ -186,15 +203,17 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 1.47 KiB [compared for emit] [minimized] (name: main)
-cacheable modules 2.25 KiB
-  ./src/index.ts 1.5 KiB [built] [code generated]
+asset index.js 1.72 KiB [emitted] [minimized] (name: main)
+cacheable modules 2.62 KiB
+  ./src/index.ts 1.87 KiB [built] [code generated]
   ./src/utils/logger.ts 764 bytes [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
+external "graphql" 42 bytes [built] [code generated]
+external "express-graphql" 42 bytes [built] [code generated]
 external "winston" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 4621 ms
-Done in 7.41s.
+webpack 5.74.0 compiled successfully in 2400 ms
+Done in 3.97s.
 ```
 Start project with Yarn
 ```console
@@ -205,11 +224,7 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-29T23:58:40.314Z] info: Server run in port 3001
-```
-*dist/index.js* result:
-```javascript
-(()=>{"use strict";var e={607:function(e,t,o){var r=this&&this.__awaiter||function(e,t,o,r){return new(o||(o=Promise))((function(n,s){function i(e){try{u(r.next(e))}catch(e){s(e)}}function a(e){try{u(r.throw(e))}catch(e){s(e)}}function u(e){var t;e.done?n(e.value):(t=e.value,t instanceof o?t:new o((function(e){e(t)}))).then(i,a)}u((r=r.apply(e,t||[])).next())}))},n=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(t,"__esModule",{value:!0}),o(142).config();const s=n(o(860)),i=o(645);r(void 0,void 0,void 0,(function*(){const{PORT:e=3e3}=process.env,t=(0,s.default)();t.use(s.default.json()),t.get("/",((e,t)=>{t.json({message:"Hello World!"})})),t.listen(e,(()=>{i.Logger.info(`Server run in port ${e}`)}))})).catch((e=>{i.Logger.error(e)}))},645:(e,t,o)=>{Object.defineProperty(t,"__esModule",{value:!0}),t.Logger=void 0;const r=o(773),{LEVEL:n="info",MAX_SIZE:s=512e4,MAX_FILES:i=5,FILE_LOG:a="./logs/API.log"}=process.env;t.Logger=(0,r.createLogger)({format:r.format.combine(r.format.simple(),r.format.timestamp(),r.format.printf((e=>`[${e.timestamp}] ${e.level}: ${e.message}`))),transports:[new r.transports.Console({level:n}),new r.transports.File({maxsize:s,maxFiles:i,filename:a})]})},142:e=>{e.exports=require("dotenv")},860:e=>{e.exports=require("express")},773:e=>{e.exports=require("winston")}},t={};!function o(r){var n=t[r];if(void 0!==n)return n.exports;var s=t[r]={exports:{}};return e[r].call(s.exports,s,s.exports,o),s.exports}(607)})();
+[2022-08-30T05:23:37.997Z] info: Server running in port 3001
 ```
 Start project with Yarn in DEV
 ```console
@@ -225,8 +240,8 @@ $ nodemon ./src/index.ts
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
 [nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`
-[2022-08-29T23:59:28.931Z] info: Server run in port 3001
+[2022-08-30T05:21:42.858Z] info: Server running in port 3001
 ```
 Result in browser
 
-![result api](resources/img/express_result_api.png?raw=true)
+![result api](resources/img/api_result.png?raw=true)
