@@ -1,6 +1,6 @@
 require("dotenv").config();
 import express, { Application, Request, Response } from "express";
-import { Logger } from "./utils/logger";
+import { Logger } from "@utils/logger";
 
 const api = async () => {
   const { PORT = 3000 } = process.env;

@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 06 Winston
+# graphql-api-nodejs / 07 Alias Path
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -17,13 +17,13 @@ yarn add express dotenv winston
 ```
 Add developer modules
 ```console
-yarn add -D typescript ts-node ts-loader webpack webpack-cli webpack-node-externals nodemon @types/node @types/express
+yarn add -D typescript ts-node ts-loader webpack webpack-cli webpack-node-externals tsconfig-paths-webpack-plugin nodemon @types/node @types/express
 ```
 Create typscript config
 ```console
 tsc --init
 ```
-Add outDir, rootDir and sourceMap into compilerOptions in tsconfig.json
+Add outDir, rootDir, bseUrl, paths, sourceMap into compilerOptions in tsconfig.json
 ```json
 {
   "compilerOptions": {
@@ -32,6 +32,12 @@ Add outDir, rootDir and sourceMap into compilerOptions in tsconfig.json
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "baseUrl": "src",
+    "paths": {
+      "@utils/*": [
+        "utils/*"
+      ]
+    },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -54,6 +60,7 @@ Create webpack.config.js
 ```javascripts
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { NODE_ENV = 'production' } = process.env;
 
 module.exports = {
@@ -64,7 +71,8 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
     },
     resolve: {
-        extensions: ['.ts', '.js'],
+        plugins: [new TsconfigPathsPlugin()],
+        extensions: ['.ts', '.js']
     },
     module: {
         rules: [
@@ -91,7 +99,7 @@ Add script in package.json with command dev, build and start
   "scripts": {
     "start": "node ./dist/index.js",
     "build": "webpack",
-    "dev": "nodemon ./src/index.ts"
+    "dev": "nodemon -r tsconfig-paths/register ./src/index.ts"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
@@ -99,6 +107,7 @@ Add script in package.json with command dev, build and start
     "nodemon": "^2.0.19",
     "ts-loader": "^9.3.1",
     "ts-node": "^10.9.1",
+    "tsconfig-paths-webpack-plugin": "^4.0.0",
     "typescript": "^4.8.2",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
@@ -106,7 +115,8 @@ Add script in package.json with command dev, build and start
   },
   "dependencies": {
     "dotenv": "^16.0.1",
-    "express": "^4.18.1"
+    "express": "^4.18.1",
+    "winston": "^3.8.1"
   }
 }
 ```
@@ -145,7 +155,7 @@ Create src/index.ts
 ```javascript
 require("dotenv").config();
 import express, { Application, Request, Response } from "express";
-import { Logger } from "./utils/logger";
+import { Logger } from "@utils/logger";
 
 const api = async () => {
   const { PORT = 3000 } = process.env;
@@ -176,15 +186,15 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 1.47 KiB [emitted] [minimized] (name: main)
+asset index.js 1.47 KiB [compared for emit] [minimized] (name: main)
 cacheable modules 2.25 KiB
   ./src/index.ts 1.5 KiB [built] [code generated]
   ./src/utils/logger.ts 764 bytes [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
 external "winston" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 4293 ms
-Done in 7.75s.
+webpack 5.74.0 compiled successfully in 4621 ms
+Done in 7.41s.
 ```
 Start project with Yarn
 ```console
@@ -195,7 +205,7 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-29T22:41:37.046Z] info: Server run in port 3001
+[2022-08-29T23:58:40.314Z] info: Server run in port 3001
 ```
 *dist/index.js* result:
 ```javascript
@@ -214,8 +224,8 @@ $ nodemon ./src/index.ts
 [nodemon] to restart at any time, enter `rs`
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
-[nodemon] starting `ts-node ./src/index.ts`
-[2022-08-29T22:43:33.769Z] info: Server run in port 3001
+[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`
+[2022-08-29T23:59:28.931Z] info: Server run in port 3001
 ```
 Result in browser
 
