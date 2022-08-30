@@ -9,6 +9,15 @@
     "paths": {
       "@utils/*": [
         "src/utils/*"
+      ],
+      "@graphql": [
+        "src/graphql"
+      ],
+      "@queries/*": [
+        "src/graphql/queries/*"
+      ],
+      "@type_defs/*": [
+        "src/graphql/type_defs/*"
       ]
     },
     "esModuleInterop": true,

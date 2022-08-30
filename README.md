@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 08 GraphQL Basic
+# graphql-api-nodejs / 09 GraphQL ObjectType
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -23,7 +23,7 @@ Create typscript config
 ```console
 tsc --init
 ```
-Add outDir, rootDir, bseUrl, paths, sourceMap into compilerOptions in tsconfig.json
+Add sourceMap, outDir, rootDir, bseUrl and paths into compilerOptions in tsconfig.json
 ```json
 {
   "compilerOptions": {
@@ -36,6 +36,15 @@ Add outDir, rootDir, bseUrl, paths, sourceMap into compilerOptions in tsconfig.j
     "paths": {
       "@utils/*": [
         "src/utils/*"
+      ],
+      "@graphql": [
+        "src/graphql"
+      ],
+      "@queries/*": [
+        "src/graphql/queries/*"
+      ],
+      "@type_defs/*": [
+        "src/graphql/type_defs/*"
       ]
     },
     "esModuleInterop": true,
@@ -153,27 +162,63 @@ export const Logger = createLogger({
   ],
 });
 ```
+Create src/graphql/type_defs/message.ts
+```javascript
+import { GraphQLObjectType, GraphQLString } from "graphql";
+
+export const MessageType = new GraphQLObjectType({
+  name: "Message",
+  description: "Message Result",
+  fields: () => ({
+    message: { type: GraphQLString },
+  }),
+});
+```
+Create src/graphql/queries/message.ts
+```javascript
+import { GraphQLString } from "graphql";
+import { MessageType } from "@type_defs/message";
+
+export const GET_MESSAGE = {
+  type: MessageType,
+  description: "Get Message",
+  args: {
+    name: { type: GraphQLString },
+  },
+  resolve(parent: any, args: any) {
+    return {
+        message: `Hello ${args.name}!`
+    }
+  },
+};
+```
+Create src/graphql/index.ts
+```javascript
+import { GraphQLObjectType, GraphQLSchema } from "graphql";
+import { GET_MESSAGE } from "@queries/message";
+
+const Query = new GraphQLObjectType({
+  name: "Query",
+  description: "Query List",
+  fields: {
+    getMessage: GET_MESSAGE,
+  },
+});
+
+export const schema = new GraphQLSchema({
+  query: Query,
+});
+```
 Create src/index.ts
 ```javascript
 require("dotenv").config();
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import { Logger } from "@utils/logger";
-import { buildSchema } from "graphql";
 import { graphqlHTTP } from "express-graphql";
+import { schema } from "@graphql";
 
 const api = async () => {
   const { PORT = 3000, NODE_ENV = "development" } = process.env;
-  const msg: string = "Hello World!";
-  const schema = buildSchema(`
-    type Query {
-        hello: String
-    }
-  `);
-  const resolvers = {
-    hello: () => {
-      return msg;
-    },
-  };
   const app: Application = express();
 
   app.use(express.json());
@@ -182,7 +227,6 @@ const api = async () => {
     graphqlHTTP({
       schema,
       graphiql: NODE_ENV === "development",
-      rootValue: resolvers,
     })
   );
   app.listen(PORT, () => {
@@ -203,17 +247,21 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 1.72 KiB [emitted] [minimized] (name: main)
-cacheable modules 2.62 KiB
-  ./src/index.ts 1.87 KiB [built] [code generated]
+asset index.js 2.33 KiB [emitted] [minimized] (name: main)
+cacheable modules 3.62 KiB
+  modules by path ./src/graphql/ 1.24 KiB
+    ./src/graphql/index.ts 437 bytes [built] [code generated]
+    ./src/graphql/queries/message.ts 477 bytes [built] [code generated]
+    ./src/graphql/type_defs/message.ts 353 bytes [built] [code generated]
+  ./src/index.ts 1.64 KiB [built] [code generated]
   ./src/utils/logger.ts 764 bytes [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
-external "graphql" 42 bytes [built] [code generated]
 external "express-graphql" 42 bytes [built] [code generated]
 external "winston" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 2400 ms
-Done in 3.97s.
+external "graphql" 42 bytes [built] [code generated]
+webpack 5.74.0 compiled successfully in 2491 ms
+Done in 3.82s.
 ```
 Start project with Yarn
 ```console
@@ -224,7 +272,7 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-30T05:23:37.997Z] info: Server running in port 3001
+[2022-08-30T07:28:12.160Z] info: Server runnig in port 3001
 ```
 Start project with Yarn in DEV
 ```console
@@ -240,7 +288,7 @@ $ nodemon ./src/index.ts
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
 [nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`
-[2022-08-30T05:21:42.858Z] info: Server running in port 3001
+[2022-08-30T07:27:45.199Z] info: Server runnig in port 3001
 ```
 Result in browser
 
