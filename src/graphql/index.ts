@@ -1,6 +1,6 @@
 import { GraphQLObjectType, GraphQLSchema } from "graphql";
 import { GET_ALL_USERS } from "@queries/user";
-import { CREATE_USER } from "@mutations/user";
+import { CREATE_USER, LOGIN } from "@mutations/user";
 
 const Query = new GraphQLObjectType({
   name: "Query",
@@ -15,6 +15,7 @@ const Mutation = new GraphQLObjectType({
   description: "Mutation list",
   fields: {
     createUser: CREATE_USER,
+    login: LOGIN,
   },
 });
 

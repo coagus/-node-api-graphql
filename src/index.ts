@@ -1,5 +1,6 @@
 require("dotenv").config();
 import "reflect-metadata";
+import cors from "cors";
 import express, { Application } from "express";
 import { Logger } from "@utils/logger";
 import { graphqlHTTP } from "express-graphql";
@@ -12,6 +13,7 @@ const api = async () => {
 
   if (!(await db.initDbPg())) throw new Error("Error initializing databaes!");
 
+  app.use(cors());
   app.use(express.json());
   app.use(
     "/api",

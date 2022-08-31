@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 11 GraphQL Mutation
+# graphql-api-nodejs / 12 Auth Bcrypt and corse
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -13,11 +13,11 @@ yarn init
 ```
 Add modules
 ```console
-yarn add express dotenv winston graphql express-graphql typeorm pg
+yarn add express corse dotenv winston graphql express-graphql typeorm pg bcrypt
 ```
 Add developer modules
 ```console
-yarn add -D typescript ts-node ts-loader webpack webpack-cli webpack-node-externals tsconfig-paths-webpack-plugin nodemon reflect-metadata @types/node @types/express
+yarn add -D typescript ts-node ts-loader webpack webpack-cli webpack-node-externals tsconfig-paths-webpack-plugin nodemon reflect-metadata @types/node @types/express @types/cors @types/bcrypt
 ```
 Create typscript config
 ```console
@@ -192,6 +192,24 @@ export const Logger = createLogger({
   ],
 });
 ```
+### Auth
+create src/utils/auth.ts
+```javascript
+import bcrypt from "bcrypt";
+import { Logger } from "@utils/logger";
+
+export const auth = {
+  encript: async (password: string) => {
+    Logger.debug("auth.encript");
+    return await bcrypt.hash(password, 10);
+  },
+  comparePassword: async (password: string, passwordEncrypt: string) => {
+    Logger.debug("auth.comparePassword");
+    return await bcrypt.compare(password, passwordEncrypt);
+  },
+};
+
+```
 ### Database
 create src/database/index.ts
 ```javascript
@@ -294,6 +312,7 @@ Create src/graphql/mutations/user.ts
 ```javascript
 import { User } from "@entities/user";
 import { MessageType, msg } from "@type_defs/message";
+import { auth } from "@utils/auth";
 import { Logger } from "@utils/logger";
 import { GraphQLString } from "graphql";
 
@@ -307,7 +326,7 @@ export const CREATE_USER = {
   },
   async resolve(parent: any, args: any) {
     Logger.debug("graphql.mutation.user.resolve");
-    const { username } = args;
+    const { name, username, password } = args;
 
     try {
       const user = await User.findOneBy({ username });
@@ -317,7 +336,11 @@ export const CREATE_USER = {
           `Username ${username} exists, please try other.`
         );
 
-      await User.insert(args);
+      await User.insert({
+        name,
+        username,
+        password: await auth.encript(password),
+      });
     } catch (error) {
       return msg.replyError(error);
     }
@@ -325,6 +348,32 @@ export const CREATE_USER = {
     return msg.replySuccess(`User ${username} created!`);
   },
 };
+
+export const LOGIN = {
+  type: MessageType,
+  description: "User login",
+  args: {
+    username: { type: GraphQLString },
+    password: { type: GraphQLString },
+  },
+  async resolve(parent: any, args: any) {
+    Logger.debug("mutations.user.LOGIN");
+    const { username, password } = args;
+    try {
+      const user = await User.findOneBy({ username });
+
+      if (!user) return msg.replyWarning(`Usuario ${username} no existe!`);
+
+      if (!(await auth.comparePassword(password, user.password)))
+        return msg.replyWarning("Contraseña incorrecta!");
+
+      return msg.replySuccess("Login successfully!");
+    } catch (error) {
+      return msg.replyError(error);
+    }
+  },
+};
+
 ```
 
 ### Message
@@ -366,7 +415,7 @@ Create src/graphql/index.ts
 ```javascript
 import { GraphQLObjectType, GraphQLSchema } from "graphql";
 import { GET_ALL_USERS } from "@queries/user";
-import { CREATE_USER } from "@mutations/user";
+import { CREATE_USER, LOGIN } from "@mutations/user";
 
 const Query = new GraphQLObjectType({
   name: "Query",
@@ -381,6 +430,7 @@ const Mutation = new GraphQLObjectType({
   description: "Mutation list",
   fields: {
     createUser: CREATE_USER,
+    login: LOGIN,
   },
 });
 
@@ -393,6 +443,7 @@ Create src/index.ts
 ```javascript
 require("dotenv").config();
 import "reflect-metadata";
+import cors from 'cors';
 import express, { Application } from "express";
 import { Logger } from "@utils/logger";
 import { graphqlHTTP } from "express-graphql";
@@ -405,6 +456,7 @@ const api = async () => {
 
   if (!(await db.initDbPg())) throw new Error("Error initializing databaes!");
 
+  app.use(cors());
   app.use(express.json());
   app.use(
     "/api",
@@ -487,11 +539,12 @@ Check result
 
 Check log
 ```bash
-[2022-08-30T23:39:54.068Z] debug: graphql.mutation.user.resolve
+[2022-08-31T01:11:00.048Z] debug: graphql.mutation.user.resolve
 query: SELECT "User"."id" AS "User_id", "User"."name" AS "User_name", "User"."username" AS "User_username", "User"."password" AS "User_password" FROM "User" "User" WHERE ("User"."username" = $1) LIMIT 1 -- 
 PARAMETERS: ["coagus"]
-query: INSERT INTO "User"("name", "username", "password") VALUES ($1, $2, $3) RETURNING "id" -- PARAMETERS: ["Christian Agustin","coagus","abc123"]
-[2022-08-30T23:39:54.164Z] info: User coagus created!
+[2022-08-31T01:11:00.140Z] debug: auth.encript
+query: INSERT INTO "User"("name", "username", "password") VALUES ($1, $2, $3) RETURNING "id" -- PARAMETERS: ["Christian Agustin","coagus","$2b$10$j6u6VNI8i/1MpS57sYWniu1/5phc.FO3ev5Rp6J5ZRSPwXAGwK1iO"]
+[2022-08-31T01:11:00.215Z] info: User coagus created!
 ```
 
 Check new row
@@ -531,23 +584,23 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 6.09 KiB [emitted] [minimized] (name: main)
-cacheable modules 10.5 KiB
-  modules by path ./src/graphql/ 4.6 KiB 5 modules
-  modules by path ./src/database/ 3.36 KiB
-    ./src/database/index.ts 1.82 KiB [built] [code generated]
-    ./src/database/entities/user.ts 1.54 KiB [built] [code generated]
-  ./src/index.ts 1.81 KiB [built] [code generated]
-  ./src/utils/logger.ts 764 bytes [built] [code generated]
+asset index.js 7.56 KiB [emitted] [minimized] (name: main)
+cacheable modules 13.3 KiB
+  modules by path ./src/graphql/ 5.82 KiB 5 modules
+  modules by path ./src/utils/*.ts 2.2 KiB 2 modules
+  modules by path ./src/database/ 3.36 KiB 2 modules
+  ./src/index.ts 1.89 KiB [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
 external "reflect-metadata" 42 bytes [built] [code generated]
+external "cors" 42 bytes [built] [code generated]
 external "express" 42 bytes [built] [code generated]
 external "express-graphql" 42 bytes [built] [code generated]
 external "winston" 42 bytes [built] [code generated]
 external "graphql" 42 bytes [built] [code generated]
 external "typeorm" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 6725 ms
-Done in 9.43s.
+external "bcrypt" 42 bytes [built] [code generated]
+webpack 5.74.0 compiled successfully in 4069 ms
+Done in 5.84s.
 ```
 Start project with Yarn
 ```bash
@@ -558,7 +611,7 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-30T23:58:05.845Z] debug: database.initDbPg
+[2022-08-31T04:10:34.677Z] debug: database.initDbPg
 query: SELECT * FROM current_schema()
 query: SELECT version();
 query: START TRANSACTION
@@ -568,6 +621,6 @@ query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WH
 query: SELECT * FROM "information_schema"."tables" WHERE "table_schema" = 'public' AND "table_name" = 'typeorm_metadata'
 query: CREATE TABLE "User" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_29a05908a0fa0728526d2833657" UNIQUE ("username"), CONSTRAINT "PK_9862f679340fb2388436a5ab3e4" PRIMARY KEY ("id"))
 query: COMMIT
-[2022-08-30T23:58:06.113Z] info: Database postgres initialized successfuly!
-[2022-08-30T23:58:06.124Z] info: Server runnig in port 3001
+[2022-08-31T04:10:34.904Z] info: Database postgres initialized successfuly!
+[2022-08-31T04:10:34.910Z] info: Server runnig in port 3001
 ```
