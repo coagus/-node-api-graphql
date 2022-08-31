@@ -1,4 +1,4 @@
-# graphql-api-nodejs / 10 TypeOrm
+# graphql-api-nodejs / 11 GraphQL Mutation
 GraphQL API with NodeJS.
 ## Get starter
 Install nodejs: https://nodejs.dev/en/download/
@@ -48,6 +48,9 @@ Add experimentalDecorators, emitDecoratorMetadata, sourceMap, outDir, rootDir, b
       ],
       "@queries/*": [
         "src/graphql/queries/*"
+      ],
+      "@mutations/*": [
+        "src/graphql/mutations/*"
       ],
       "@type_defs/*": [
         "src/graphql/type_defs/*"
@@ -266,6 +269,8 @@ export const UserType = new GraphQLObjectType({
   }),
 });
 ```
+**Query**
+
 Create src/graphql/queries/user.ts
 ```javascript
 import { User } from "@entities/user";
@@ -282,34 +287,77 @@ export const GET_ALL_USERS = {
     }
 }
 ```
+
+**Mutation**
+
+Create src/graphql/mutations/user.ts
+```javascript
+import { User } from "@entities/user";
+import { MessageType, msg } from "@type_defs/message";
+import { Logger } from "@utils/logger";
+import { GraphQLString } from "graphql";
+
+export const CREATE_USER = {
+  type: MessageType,
+  description: "Create user",
+  args: {
+    name: { type: GraphQLString },
+    username: { type: GraphQLString },
+    password: { type: GraphQLString },
+  },
+  async resolve(parent: any, args: any) {
+    Logger.debug("graphql.mutation.user.resolve");
+    const { username } = args;
+
+    try {
+      const user = await User.findOneBy({ username });
+
+      if (user)
+        return msg.replyWarning(
+          `Username ${username} exists, please try other.`
+        );
+
+      await User.insert(args);
+    } catch (error) {
+      return msg.replyError(error);
+    }
+
+    return msg.replySuccess(`User ${username} created!`);
+  },
+};
+```
+
 ### Message
 Create src/graphql/type_defs/message.ts
 ```javascript
-import { GraphQLObjectType, GraphQLString } from "graphql";
+import { Logger } from "@utils/logger";
+import { GraphQLBoolean, GraphQLObjectType, GraphQLString } from "graphql";
 
 export const MessageType = new GraphQLObjectType({
   name: "Message",
   description: "Message Result",
   fields: () => ({
+    successful: { type: GraphQLBoolean },
     message: { type: GraphQLString },
   }),
 });
-```
-Create src/graphql/queries/message.ts
-```javascript
-import { GraphQLString } from "graphql";
-import { MessageType } from "@type_defs/message";
 
-export const GET_MESSAGE = {
-  type: MessageType,
-  description: "Get Message",
-  args: {
-    name: { type: GraphQLString },
-  },
-  resolve(parent: any, args: any) {
-    return {
-        message: `Hello ${args.name}!`
+export const msg = {
+  replyError: (error: any) => {
+    if (error instanceof Error) {
+      const err = <Error>error;
+      Logger.error(err.message);
+      return { successful: false, message: err.message };
     }
+    return { succesful: false, message: JSON.stringify(error) };
+  },
+  replyWarning: (message: string) => {
+    Logger.warn(message);
+    return { successful: false, message };
+  },
+  replySuccess: (message: string) => {
+    Logger.info(message);
+    return { successful: true, message };
   },
 };
 ```
@@ -317,20 +365,28 @@ export const GET_MESSAGE = {
 Create src/graphql/index.ts
 ```javascript
 import { GraphQLObjectType, GraphQLSchema } from "graphql";
-import { GET_MESSAGE } from "@queries/message";
 import { GET_ALL_USERS } from "@queries/user";
+import { CREATE_USER } from "@mutations/user";
 
 const Query = new GraphQLObjectType({
   name: "Query",
   description: "Query List",
   fields: {
-    getMessage: GET_MESSAGE,
-    getAllUsers: GET_ALL_USERS
+    getAllUsers: GET_ALL_USERS,
+  },
+});
+
+const Mutation = new GraphQLObjectType({
+  name: "Mutation",
+  description: "Mutation list",
+  fields: {
+    createUser: CREATE_USER,
   },
 });
 
 export const schema = new GraphQLSchema({
   query: Query,
+  mutation: Mutation,
 });
 ```
 Create src/index.ts
@@ -393,26 +449,50 @@ $ nodemon -r tsconfig-paths/register ./src/index.ts
 [nodemon] watching path(s): *.*
 [nodemon] watching extensions: ts,json
 [nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`
-[2022-08-30T19:53:31.490Z] debug: database.initDbPg
+[2022-08-30T23:10:11.113Z] debug: database.initDbPg
 query: SELECT * FROM current_schema()
 query: SELECT version();
 query: START TRANSACTION
 query: SELECT * FROM current_schema()
 query: SELECT * FROM current_database()
-query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WHERE ("table_schema" = 'public' AND "table_name" = 'user')
+query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WHERE ("table_schema" = 'public' AND "table_name" = 'User')
 query: SELECT * FROM "information_schema"."tables" WHERE "table_schema" = 'public' AND "table_name" = 'typeorm_metadata'
-query: CREATE TABLE "user" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_78a916df40e02a9deb1c4b75edb" UNIQUE ("username"), CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id"))
+query: CREATE TABLE "User" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_29a05908a0fa0728526d2833657" UNIQUE ("username"), CONSTRAINT "PK_9862f679340fb2388436a5ab3e4" PRIMARY KEY ("id"))
 query: COMMIT
-[2022-08-30T19:53:31.723Z] info: Database postgres initialized successfuly!
-[2022-08-30T19:53:31.728Z] info: Server runnig in port 3001
+[2022-08-30T23:10:11.374Z] info: Database postgres initialized successfuly!
+[2022-08-30T23:10:11.379Z] info: Server runnig in port 3001
 ```
 Check table User in this link:
 http://localhost:8080/?pgsql=host.docker.internal&username=postgres&db=apidb&ns=public&table=user
 ![user table](resources/img/user_table.png?raw=true)
 
-Create new row
-http://localhost:8080/?pgsql=host.docker.internal&username=postgres&db=apidb&ns=public&edit=user
+Create new user with GraphQL
+
+http://localhost:3001/api
+
+```javascript
+mutation {
+   createUser(
+    name: "Christian Agustin", 
+    username: "coagus", 
+    password: "abc123") {
+    successful
+    message
+  }
+}
+```
+Check result
+
 ![user table](resources/img/insert_user.png?raw=true)
+
+Check log
+```bash
+[2022-08-30T23:39:54.068Z] debug: graphql.mutation.user.resolve
+query: SELECT "User"."id" AS "User_id", "User"."name" AS "User_name", "User"."username" AS "User_username", "User"."password" AS "User_password" FROM "User" "User" WHERE ("User"."username" = $1) LIMIT 1 -- 
+PARAMETERS: ["coagus"]
+query: INSERT INTO "User"("name", "username", "password") VALUES ($1, $2, $3) RETURNING "id" -- PARAMETERS: ["Christian Agustin","coagus","abc123"]
+[2022-08-30T23:39:54.164Z] info: User coagus created!
+```
 
 Check new row
 http://localhost:8080/?pgsql=host.docker.internal&username=postgres&db=apidb&ns=public&select=user
@@ -451,12 +531,12 @@ Result:
 $ yarn build
 yarn run v<#.##.## your version>
 $ webpack
-asset index.js 4.96 KiB [emitted] [minimized] (name: main)
-cacheable modules 8.23 KiB
-  modules by path ./src/graphql/ 2.33 KiB 5 modules
-  modules by path ./src/database/ 3.34 KiB
+asset index.js 6.09 KiB [emitted] [minimized] (name: main)
+cacheable modules 10.5 KiB
+  modules by path ./src/graphql/ 4.6 KiB 5 modules
+  modules by path ./src/database/ 3.36 KiB
     ./src/database/index.ts 1.82 KiB [built] [code generated]
-    ./src/database/entities/user.ts 1.52 KiB [built] [code generated]
+    ./src/database/entities/user.ts 1.54 KiB [built] [code generated]
   ./src/index.ts 1.81 KiB [built] [code generated]
   ./src/utils/logger.ts 764 bytes [built] [code generated]
 external "dotenv" 42 bytes [built] [code generated]
@@ -466,8 +546,8 @@ external "express-graphql" 42 bytes [built] [code generated]
 external "winston" 42 bytes [built] [code generated]
 external "graphql" 42 bytes [built] [code generated]
 external "typeorm" 42 bytes [built] [code generated]
-webpack 5.74.0 compiled successfully in 3910 ms
-Done in 5.66s.
+webpack 5.74.0 compiled successfully in 6725 ms
+Done in 9.43s.
 ```
 Start project with Yarn
 ```bash
@@ -478,7 +558,7 @@ Result:
 $ yarn start
 yarn run v<#.##.## your version>
 $ node ./dist/index.js
-[2022-08-30T21:52:08.094Z] debug: database.initDbPg
+[2022-08-30T23:58:05.845Z] debug: database.initDbPg
 query: SELECT * FROM current_schema()
 query: SELECT version();
 query: START TRANSACTION
@@ -488,6 +568,6 @@ query: SELECT "table_schema", "table_name" FROM "information_schema"."tables" WH
 query: SELECT * FROM "information_schema"."tables" WHERE "table_schema" = 'public' AND "table_name" = 'typeorm_metadata'
 query: CREATE TABLE "User" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "username" character varying NOT NULL, "password" character varying NOT NULL, CONSTRAINT "UQ_29a05908a0fa0728526d2833657" UNIQUE ("username"), CONSTRAINT "PK_9862f679340fb2388436a5ab3e4" PRIMARY KEY ("id"))
 query: COMMIT
-[2022-08-30T21:52:08.322Z] info: Database postgres initialized successfuly!
-[2022-08-30T21:52:08.329Z] info: Server runnig in port 3001
+[2022-08-30T23:58:06.113Z] info: Database postgres initialized successfuly!
+[2022-08-30T23:58:06.124Z] info: Server runnig in port 3001
 ```

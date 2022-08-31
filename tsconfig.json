@@ -18,6 +18,9 @@
       "@queries/*": [
         "src/graphql/queries/*"
       ],
+      "@mutations/*": [
+        "src/graphql/mutations/*"
+      ],
       "@type_defs/*": [
         "src/graphql/type_defs/*"
       ],
