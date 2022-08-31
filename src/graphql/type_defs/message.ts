@@ -7,6 +7,7 @@ export const MessageType = new GraphQLObjectType({
   fields: () => ({
     successful: { type: GraphQLBoolean },
     message: { type: GraphQLString },
+    token: { type: GraphQLString },
   }),
 });
 
@@ -26,5 +27,8 @@ export const msg = {
   replySuccess: (message: string) => {
     Logger.info(message);
     return { successful: true, message };
+  },
+  replyToken: (token: string) => {
+    return { successful: true, token };
   },
 };

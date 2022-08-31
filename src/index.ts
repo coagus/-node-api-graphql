@@ -2,10 +2,11 @@ require("dotenv").config();
 import "reflect-metadata";
 import cors from "cors";
 import express, { Application } from "express";
-import { Logger } from "@utils/logger";
 import { graphqlHTTP } from "express-graphql";
+import { Logger } from "@utils/logger";
 import { schema } from "@graphql";
 import { db } from "@database";
+import { auth } from "@utils/auth";
 
 const api = async () => {
   const { PORT = 3000, NODE_ENV = "development" } = process.env;
@@ -15,6 +16,7 @@ const api = async () => {
 
   app.use(cors());
   app.use(express.json());
+  app.use(auth.checkToken);
   app.use(
     "/api",
     graphqlHTTP({
