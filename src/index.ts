@@ -12,7 +12,7 @@ const api = async () => {
   const { PORT = 3000, NODE_ENV = "development" } = process.env;
   const app: Application = express();
 
-  if (!(await db.initDbPg())) throw new Error("Error initializing databaes!");
+  if (!(await db.initDbPg())) throw new Error("Error initializing database!");
 
   app.use(cors());
   app.use(express.json());

@@ -1,26 +1,8 @@
-import { GraphQLObjectType, GraphQLSchema } from "graphql";
-import { GET_ALL_USERS } from "@queries/user";
-import { CREATE_FIRST_ADMIN, CREATE_USER, LOGIN } from "@mutations/user";
-
-const Query = new GraphQLObjectType({
-  name: "Query",
-  description: "Query List",
-  fields: {
-    getAllUsers: GET_ALL_USERS,
-  },
-});
-
-const Mutation = new GraphQLObjectType({
-  name: "Mutation",
-  description: "Mutation list",
-  fields: {
-    createFirstAdmin: CREATE_FIRST_ADMIN,
-    createUser: CREATE_USER,
-    login: LOGIN,
-  },
-});
+import { GraphQLSchema } from "graphql";
+import { query } from "@graphql/mainType/query";
+import { mutation } from "@graphql/mainType/mutation";
 
 export const schema = new GraphQLSchema({
-  query: Query,
-  mutation: Mutation,
+  query,
+  mutation,
 });

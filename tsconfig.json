@@ -15,6 +15,15 @@
       "@graphql": [
         "src/graphql"
       ],
+      "@graphql/*": [
+        "src/graphql/*"
+      ],
+      "@demo/*": [
+        "src/graphql/demo/*"
+      ],
+      "@user/*": [
+        "src/graphql/user/*"
+      ],
       "@queries/*": [
         "src/graphql/queries/*"
       ],

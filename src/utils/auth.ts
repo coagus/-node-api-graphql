@@ -26,11 +26,13 @@ export const auth = {
     const { SECRET_KEY = "MySecretKey" } = process.env;
     const schema: string = "Bearer ";
     const auth: string = req.headers["authorization"];
-    const token: string = auth.includes(schema) ? auth.replace(schema, "") : "";
 
-    if (token !== "") {
-      Logger.debug(token);
+    if (auth) {
       try {
+        const token: string = auth.includes(schema)
+          ? auth.replace(schema, "")
+          : "";
+        Logger.debug(token);
         const payLoad = jwt.verify(token, SECRET_KEY);
         req.verified = payLoad;
         Logger.debug(JSON.stringify(req.verified));

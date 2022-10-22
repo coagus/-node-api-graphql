@@ -1,0 +1,12 @@
+dist
+docker
+logs
+node_modules
+resources
+.example.env
+.git
+.gitignore
+.dockerignore
+LICENSE
+README.md
+Dockerfile
